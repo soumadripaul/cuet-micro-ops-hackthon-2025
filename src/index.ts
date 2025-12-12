@@ -1,4 +1,9 @@
-import { HeadObjectCommand, S3Client, ListBucketsCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+import {
+  HeadObjectCommand,
+  S3Client,
+  ListBucketsCommand,
+  HeadBucketCommand,
+} from "@aws-sdk/client-s3";
 import { serve } from "@hono/node-server";
 import type { ServerType } from "@hono/node-server";
 import { httpInstrumentationMiddleware } from "@hono/otel";
@@ -55,12 +60,13 @@ const env = EnvSchema.parse(process.env);
 const s3Client = new S3Client({
   region: process.env.S3_REGION ?? "us-east-1",
   endpoint: process.env.S3_ENDPOINT ?? "http://minio:9000",
-  credentials: process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
-    ? {
-      accessKeyId: process.env.S3_ACCESS_KEY_ID,
-      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-    }
-    : undefined,
+  credentials:
+    process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+        }
+      : undefined,
   forcePathStyle: true,
 });
 
@@ -281,7 +287,7 @@ const checkS3Health = async (): Promise<"ok" | "error"> => {
       if (result.Buckets?.some((b) => b.Name === env.S3_BUCKET_NAME)) {
         return "ok";
       }
-    } catch { }
+    } catch {}
     return "error";
   }
 };

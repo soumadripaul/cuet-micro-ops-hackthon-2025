@@ -1,1 +1,6 @@
 data/
+node_modules/
+dist/
+frontend/dist/
+*.log
+.env

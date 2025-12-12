@@ -19,7 +19,9 @@ const metricsStore = {
 
 // Function to update metrics from API calls
 function updateMetrics(success: boolean, responseTime: number) {
-  console.log(`[Metrics] API Call: ${success ? 'Success' : 'Failed'}, Response Time: ${responseTime}ms`);
+  console.log(
+    `[Metrics] API Call: ${success ? "Success" : "Failed"}, Response Time: ${responseTime}ms`,
+  );
   metricsStore.totalRequests++;
   if (success) {
     metricsStore.successCount++;
@@ -31,7 +33,9 @@ function updateMetrics(success: boolean, responseTime: number) {
   if (metricsStore.responseTimes.length > 100) {
     metricsStore.responseTimes.shift();
   }
-  console.log(`[Metrics] Total: ${metricsStore.totalRequests}, Success: ${metricsStore.successCount}, Failed: ${metricsStore.failureCount}`);
+  console.log(
+    `[Metrics] Total: ${metricsStore.totalRequests}, Success: ${metricsStore.successCount}, Failed: ${metricsStore.failureCount}`,
+  );
 }
 
 export function PerformanceMetrics() {
@@ -45,7 +49,7 @@ export function PerformanceMetrics() {
   // Register metrics updater and update metrics display from global store
   useEffect(() => {
     // Register the updater function with the API
-    console.log('[Metrics] Registering metrics updater');
+    console.log("[Metrics] Registering metrics updater");
     registerMetricsUpdater(updateMetrics);
 
     const updateDisplay = () => {
@@ -53,7 +57,7 @@ export function PerformanceMetrics() {
         metricsStore.responseTimes.length > 0
           ? Math.round(
               metricsStore.responseTimes.reduce((a, b) => a + b, 0) /
-                metricsStore.responseTimes.length
+                metricsStore.responseTimes.length,
             )
           : 0;
 

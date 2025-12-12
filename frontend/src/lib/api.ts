@@ -6,13 +6,14 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 // Import metrics updater
-let updateMetrics: ((success: boolean, responseTime: number) => void) | null = null;
+let updateMetrics: ((success: boolean, responseTime: number) => void) | null =
+  null;
 
 // Allow PerformanceMetrics component to register itself
 export function registerMetricsUpdater(
-  updater: (success: boolean, responseTime: number) => void
+  updater: (success: boolean, responseTime: number) => void,
 ) {
-  console.log('[API] Metrics updater registered');
+  console.log("[API] Metrics updater registered");
   updateMetrics = updater;
 }
 
@@ -132,13 +133,15 @@ async function fetchWithTracing<T>(
         }
 
         const data = await response.json();
-        
+
         // Track metrics
         if (updateMetrics) {
-          console.log(`[API] Calling updateMetrics: success=true, duration=${duration}ms`);
+          console.log(
+            `[API] Calling updateMetrics: success=true, duration=${duration}ms`,
+          );
           updateMetrics(true, duration);
         } else {
-          console.log('[API] updateMetrics not registered yet');
+          console.log("[API] updateMetrics not registered yet");
         }
 
         span.setStatus({ code: 1 }); // OK
@@ -149,7 +152,7 @@ async function fetchWithTracing<T>(
         if (updateMetrics) {
           updateMetrics(false, 0);
         }
-        
+
         span.setStatus({ code: 2, message: String(error) });
         span.recordException(error as Error);
         span.end();
