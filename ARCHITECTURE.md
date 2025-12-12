@@ -16,24 +16,24 @@ flowchart LR
     end
 
     subgraph API[Microservice API Layer]
-      APIInit[/POST /v1/download/initiate/]
-      APIStatus[/GET /v1/download/status/:jobId/]
-      APIDownload[/GET /v1/download/:jobId/]
-      APISubscribe[/GET /v1/download/subscribe/:jobId (SSE)/]
+      APIInit["POST /v1/download/initiate"]
+      APIStatus["GET /v1/download/status/:jobId"]
+      APIDownload["GET /v1/download/:jobId"]
+      APISubscribe["GET /v1/download/subscribe/:jobId (SSE)"]
     end
 
     subgraph Queueing[Async Processing]
-      Q[Queue (BullMQ/Redis or SQS)]
-      Worker[Worker Process]
+      Q["Queue (BullMQ/Redis or SQS)"]
+      Worker["Worker Process"]
     end
 
     subgraph Storage[Artifact Store]
-      S3[(Object Storage e.g., S3)]
+      S3[("Object Storage e.g., S3")]
     end
 
     subgraph DB[State Store]
-      Redis[(Redis)]
-      SQL[(Postgres/Prisma)]
+      Redis[("Redis")]
+      SQL[("Postgres/Prisma")]
     end
 
     UI -->|Initiate| CF --> APIInit
