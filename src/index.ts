@@ -1,4 +1,4 @@
-import { HeadObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { HeadObjectCommand, S3Client, ListBucketsCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
 import { serve } from "@hono/node-server";
 import type { ServerType } from "@hono/node-server";
 import { httpInstrumentationMiddleware } from "@hono/otel";
@@ -53,8 +53,8 @@ const env = EnvSchema.parse(process.env);
 
 // S3 Client (force path-style, always use endpoint from env)
 const s3Client = new S3Client({
-  region: process.env.S3_REGION || "us-east-1",
-  endpoint: process.env.S3_ENDPOINT || "http://minio:9000",
+  region: process.env.S3_REGION ?? "us-east-1",
+  endpoint: process.env.S3_ENDPOINT ?? "http://minio:9000",
   credentials: process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
     ? {
       accessKeyId: process.env.S3_ACCESS_KEY_ID,
@@ -266,7 +266,6 @@ const sanitizeS3Key = (fileId: number): string => {
 };
 
 // S3 health check: verify S3 connection by performing a ListBuckets or HeadBucket operation
-import { ListBucketsCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
 const checkS3Health = async (): Promise<"ok" | "error"> => {
   if (!env.S3_BUCKET_NAME) return "ok"; // Mock mode
   try {
@@ -274,7 +273,7 @@ const checkS3Health = async (): Promise<"ok" | "error"> => {
     const command = new HeadBucketCommand({ Bucket: env.S3_BUCKET_NAME });
     await s3Client.send(command);
     return "ok";
-  } catch (err) {
+  } catch {
     // If HeadBucket fails, try ListBuckets as fallback
     try {
       const listCommand = new ListBucketsCommand({});
