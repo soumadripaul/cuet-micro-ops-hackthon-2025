@@ -1,5 +1,7 @@
 # Delineate Hackathon Challenge - CUET Fest 2025
 
+[![Show cd Behavior](https://github.com/bongodev/cuet-micro-ops-hackthon-2025/actions/workflows/show-cd.yml/badge.svg)](https://github.com/bongodev/cuet-micro-ops-hackthon-2025/actions/workflows/show-cd.yml)
+
 ## The Scenario
 
 This microservice simulates a **real-world file download system** where processing times vary significantly:
@@ -398,7 +400,7 @@ A complete React frontend with Sentry and OpenTelemetry integration has been imp
 
 - 🎯 Real-time health monitoring dashboard
 - 📥 Download job management with status tracking
- 
+
 ### CI/CD and `cd`-free frontend scripts
 
 To avoid relying on `cd` across steps in CI and to simplify local usage, the root `package.json` includes helper scripts that run inside the `frontend` directory using `npm --prefix`:
@@ -415,6 +417,7 @@ Example:
 npm run frontend:install
 npm run frontend:build
 ```
+
 - 🐛 Comprehensive Sentry error tracking with user feedback dialogs
 - 📊 End-to-end distributed tracing with OpenTelemetry
 - 🔍 Full trace correlation between frontend errors and backend operations
