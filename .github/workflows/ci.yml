@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: node:24-slim
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -45,10 +45,10 @@ jobs:
     needs: lint
     container:
       image: node:24-slim
-    
+
     # Fail fast: Stop other jobs if this fails
     continue-on-error: false
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
     name: 🐳 Build Docker Image
     runs-on: ubuntu-24.04
     needs: test
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -143,9 +143,9 @@ jobs:
           echo "1. Configure your deployment target (AWS, GCP, Azure, etc.)"
           echo "2. Add necessary secrets to GitHub repository settings"
           echo "3. Uncomment and configure deployment steps below"
-      
+
       # Uncomment and configure based on your deployment target:
-      # 
+      #
       # Example: Deploy to AWS ECS
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v4
@@ -184,7 +184,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [lint, test, build]
     if: always()
-    
+
     steps:
       - name: 📊 Generate summary
         run: |

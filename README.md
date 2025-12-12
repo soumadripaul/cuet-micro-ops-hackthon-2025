@@ -609,7 +609,6 @@ The CI/CD pipeline consists of four stages:
 - ✅ **Pull Request Checks**: All PRs must pass before merging
 - ✅ **Concurrency Control**: Cancels outdated runs when new commits are pushed
 
-
 ### For Contributors
 
 #### Running Tests Locally Before Pushing
@@ -701,13 +700,13 @@ The deploy stage is included but commented out. To enable deployment:
 
 #### Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| Lint errors | Run `npm run lint:fix` to auto-fix |
-| Format errors | Run `npm run format` to auto-format |
-| Test failures | Check test logs and run `npm run test:e2e` locally |
+| Issue              | Solution                                             |
+| ------------------ | ---------------------------------------------------- |
+| Lint errors        | Run `npm run lint:fix` to auto-fix                   |
+| Format errors      | Run `npm run format` to auto-format                  |
+| Test failures      | Check test logs and run `npm run test:e2e` locally   |
 | Docker build fails | Test with `docker build -f docker/Dockerfile.prod .` |
-| Cache issues | Clear cache in GitHub Actions settings |
+| Cache issues       | Clear cache in GitHub Actions settings               |
 
 ### Pipeline Configuration
 
