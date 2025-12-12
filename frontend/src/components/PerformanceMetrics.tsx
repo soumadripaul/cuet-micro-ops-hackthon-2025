@@ -1,11 +1,37 @@
 import { BarChart3, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import { registerMetricsUpdater } from "../lib/api";
 
 interface MetricData {
   successCount: number;
   failureCount: number;
   avgResponseTime: number;
   totalRequests: number;
+}
+
+// Global metrics storage
+const metricsStore = {
+  successCount: 0,
+  failureCount: 0,
+  responseTimes: [] as number[],
+  totalRequests: 0,
+};
+
+// Function to update metrics from API calls
+function updateMetrics(success: boolean, responseTime: number) {
+  console.log(`[Metrics] API Call: ${success ? 'Success' : 'Failed'}, Response Time: ${responseTime}ms`);
+  metricsStore.totalRequests++;
+  if (success) {
+    metricsStore.successCount++;
+  } else {
+    metricsStore.failureCount++;
+  }
+  metricsStore.responseTimes.push(responseTime);
+  // Keep only last 100 response times
+  if (metricsStore.responseTimes.length > 100) {
+    metricsStore.responseTimes.shift();
+  }
+  console.log(`[Metrics] Total: ${metricsStore.totalRequests}, Success: ${metricsStore.successCount}, Failed: ${metricsStore.failureCount}`);
 }
 
 export function PerformanceMetrics() {
@@ -16,14 +42,32 @@ export function PerformanceMetrics() {
     totalRequests: 0,
   });
 
-  // In a real app, this would come from actual telemetry data
+  // Register metrics updater and update metrics display from global store
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics((prev) => ({
-        ...prev,
-        // Mock data update
-      }));
-    }, 5000);
+    // Register the updater function with the API
+    console.log('[Metrics] Registering metrics updater');
+    registerMetricsUpdater(updateMetrics);
+
+    const updateDisplay = () => {
+      const avgResponseTime =
+        metricsStore.responseTimes.length > 0
+          ? Math.round(
+              metricsStore.responseTimes.reduce((a, b) => a + b, 0) /
+                metricsStore.responseTimes.length
+            )
+          : 0;
+
+      setMetrics({
+        successCount: metricsStore.successCount,
+        failureCount: metricsStore.failureCount,
+        avgResponseTime,
+        totalRequests: metricsStore.totalRequests,
+      });
+    };
+
+    // Update every second
+    const interval = setInterval(updateDisplay, 1000);
+    updateDisplay(); // Initial update
 
     return () => clearInterval(interval);
   }, []);
@@ -35,10 +79,18 @@ export function PerformanceMetrics() {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold mb-4 flex items-center">
-        <BarChart3 className="mr-2 h-5 w-5" />
-        Performance Metrics
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold flex items-center">
+          <BarChart3 className="mr-2 h-5 w-5" />
+          Performance Metrics
+        </h2>
+        {metrics.totalRequests > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-xs text-green-600 font-medium">LIVE</span>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-green-50 rounded-lg">

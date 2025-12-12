@@ -23,6 +23,7 @@ services:
       - CORS_ORIGINS=http://localhost:5173
     depends_on:
       - delineate-jaeger
+      - minio
     networks:
       - delineate-network
 
@@ -76,6 +77,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - delineate-network
 
   minio-init:
     image: minio/mc
@@ -85,11 +88,11 @@ services:
     entrypoint: >
       sh -c "mc alias set local http://minio:9000 minioadmin minioadmin --api S3v4 && mc mb --ignore-existing local/downloads"
     restart: "no"
+    networks:
+      - delineate-network
 
 volumes:
   minio_data:
-    networks:
-      - delineate-network
 
 networks:
   delineate-network:
