@@ -261,11 +261,11 @@ Polling (React):
 
 ```ts
 async function startDownload(fileId: number) {
-  const res = await fetch('/v1/download/initiate', {
-    method: 'POST',
+  const res = await fetch("/v1/download/initiate", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Idempotency-Key': crypto.randomUUID(),
+      "Content-Type": "application/json",
+      "Idempotency-Key": crypto.randomUUID(),
     },
     body: JSON.stringify({ file_id: fileId }),
   });
@@ -285,8 +285,13 @@ async function pollStatus(jobId: string, onUpdate: (s: any) => void) {
   while (true) {
     const s = await getStatus(jobId);
     onUpdate(s);
-    if (s.status === 'completed' || s.status === 'failed' || s.status === 'canceled') break;
-    await new Promise(r => setTimeout(r, delay));
+    if (
+      s.status === "completed" ||
+      s.status === "failed" ||
+      s.status === "canceled"
+    )
+      break;
+    await new Promise((r) => setTimeout(r, delay));
     delay = Math.min(max, Math.round(delay * 1.7));
   }
 }
@@ -298,7 +303,9 @@ SSE (React):
 function subscribe(jobId: string, onUpdate: (s: any) => void) {
   const es = new EventSource(`/v1/download/subscribe/${jobId}`);
   es.onmessage = (ev) => {
-    try { onUpdate(JSON.parse(ev.data)); } catch {}
+    try {
+      onUpdate(JSON.parse(ev.data));
+    } catch {}
   };
   es.onerror = () => {
     // Let the browser auto-reconnect; optionally close & reopen
