@@ -51,18 +51,17 @@ const EnvSchema = z.object({
 // Parse and validate environment
 const env = EnvSchema.parse(process.env);
 
-// S3 Client
+// S3 Client (force path-style, always use endpoint from env)
 const s3Client = new S3Client({
-  region: env.S3_REGION,
-  ...(env.S3_ENDPOINT && { endpoint: env.S3_ENDPOINT }),
-  ...(env.S3_ACCESS_KEY_ID &&
-    env.S3_SECRET_ACCESS_KEY && {
-      credentials: {
-        accessKeyId: env.S3_ACCESS_KEY_ID,
-        secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-      },
-    }),
-  forcePathStyle: env.S3_FORCE_PATH_STYLE,
+  region: process.env.S3_REGION || "us-east-1",
+  endpoint: process.env.S3_ENDPOINT || "http://minio:9000",
+  credentials: process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
+    ? {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+    }
+    : undefined,
+  forcePathStyle: true,
 });
 
 // Initialize OpenTelemetry SDK
@@ -260,22 +259,25 @@ const sanitizeS3Key = (fileId: number): string => {
   return `downloads/${String(sanitizedId)}.zip`;
 };
 
-// S3 health check
-const checkS3Health = async (): Promise<boolean> => {
-  if (!env.S3_BUCKET_NAME) return true; // Mock mode
+// S3 health check: verify S3 connection by performing a ListBuckets or HeadBucket operation
+import { ListBucketsCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
+const checkS3Health = async (): Promise<"ok" | "error"> => {
+  if (!env.S3_BUCKET_NAME) return "ok"; // Mock mode
   try {
-    // Use a lightweight HEAD request on a known path
-    const command = new HeadObjectCommand({
-      Bucket: env.S3_BUCKET_NAME,
-      Key: "__health_check_marker__",
-    });
+    // Try HeadBucket on the downloads bucket
+    const command = new HeadBucketCommand({ Bucket: env.S3_BUCKET_NAME });
     await s3Client.send(command);
-    return true;
+    return "ok";
   } catch (err) {
-    // NotFound is fine - bucket is accessible
-    if (err instanceof Error && err.name === "NotFound") return true;
-    // AccessDenied or other errors indicate connection issues
-    return false;
+    // If HeadBucket fails, try ListBuckets as fallback
+    try {
+      const listCommand = new ListBucketsCommand({});
+      const result = await s3Client.send(listCommand);
+      if (result.Buckets?.some((b) => b.Name === env.S3_BUCKET_NAME)) {
+        return "ok";
+      }
+    } catch { }
+    return "error";
   }
 };
 
@@ -380,14 +382,14 @@ app.openapi(rootRoute, (c) => {
 });
 
 app.openapi(healthRoute, async (c) => {
-  const storageHealthy = await checkS3Health();
-  const status = storageHealthy ? "healthy" : "unhealthy";
-  const httpStatus = storageHealthy ? 200 : 503;
+  const storageStatus = await checkS3Health();
+  const status = storageStatus === "ok" ? "healthy" : "unhealthy";
+  const httpStatus = storageStatus === "ok" ? 200 : 503;
   return c.json(
     {
       status,
       checks: {
-        storage: storageHealthy ? "ok" : "error",
+        storage: storageStatus,
       },
     },
     httpStatus,
