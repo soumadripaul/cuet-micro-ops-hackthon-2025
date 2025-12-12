@@ -560,7 +560,7 @@ npm run docker:prod  # Start with Docker (production)
 
 ## CI/CD
 
-![CI/CD Pipeline](https://github.com/bongodev/cuet-micro-ops-hackthon-2025/actions/workflows/ci.yml/badge.svg)
+![CI/CD Pipeline](https://github.com/soumadripaul/cuet-micro-ops-hackthon-2025/actions/workflows/ci.yml/badge.svg)
 
 This project uses **GitHub Actions** for continuous integration and deployment. The pipeline automatically runs on every push to `main`/`master` and on all pull requests.
 
