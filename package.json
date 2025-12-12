@@ -5,8 +5,8 @@
     "node": ">=24.10.0"
   },
   "scripts": {
-    "dev": "DOWNLOAD_DELAY_MIN_MS=5000 DOWNLOAD_DELAY_MAX_MS=15000 node --env-file=.env --experimental-transform-types --watch src/index.ts",
-    "start": "DOWNLOAD_DELAY_MIN_MS=10000 DOWNLOAD_DELAY_MAX_MS=120000 node --env-file=.env --experimental-transform-types src/index.ts",
+    "dev": "node --experimental-transform-types --watch src/index.ts",
+    "start": "node --experimental-transform-types src/index.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write .",
@@ -26,6 +26,7 @@
     "@opentelemetry/sdk-node": "^0.208.0",
     "@opentelemetry/semantic-conventions": "^1.38.0",
     "@scalar/hono-api-reference": "^0.9.28",
+    "@sentry/react": "^10.30.0",
     "hono": "^4.10.8",
     "hono-rate-limiter": "^0.4.2",
     "zod": "^4.1.13"

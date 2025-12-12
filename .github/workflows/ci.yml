@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,39 +6,90 @@ on:
   pull_request:
     branches: [main, master]
 
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint:
-    name: Lint
+  lint-backend:
+    name: 🔍 Lint Backend
     runs-on: ubuntu-24.04
     container:
       image: node:24-slim
+
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-backend-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-backend-
 
-      - name: Run ESLint
+      - name: 📥 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🔍 Run ESLint
         run: npm run lint
 
-      - name: Check formatting
+      - name: 💅 Check code formatting
         run: npm run format:check
 
-  test:
-    name: E2E Tests
+  lint-frontend:
+    name: 🔍 Lint Frontend
     runs-on: ubuntu-24.04
-    needs: lint
     container:
       image: node:24-slim
+
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-frontend-
 
-      - name: Run E2E tests
+      - name: 📥 Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🔍 Run frontend lint
+        working-directory: frontend
+        run: npm run lint
+
+  test-backend:
+    name: 🧪 Backend E2E Tests
+    runs-on: ubuntu-24.04
+    needs: lint-backend
+    container:
+      image: node:24-slim
+
+    continue-on-error: false
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-backend-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-backend-
+
+      - name: 📥 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🧪 Run E2E tests
         run: npm run test:e2e
         env:
           NODE_ENV: development
@@ -53,23 +104,229 @@ jobs:
           RATE_LIMIT_MAX_REQUESTS: "100"
           CORS_ORIGINS: "*"
 
-  build:
-    name: Build Docker Image
+      - name: 📊 Report test results
+        if: always()
+        run: |
+          echo "::notice title=Test Status::E2E tests completed"
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully"
+          else
+            echo "❌ Some tests failed"
+            exit 1
+          fi
+
+  build-frontend:
+    name: 🏗️ Build Frontend
     runs-on: ubuntu-24.04
-    needs: test
+    needs: lint-frontend
+    container:
+      image: node:24-slim
+
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-frontend-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-frontend-
+
+      - name: 📥 Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🏗️ Build frontend
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_SENTRY_DSN: ""
+          VITE_SENTRY_ENVIRONMENT: production
+          VITE_API_BASE_URL: http://localhost:3000
+          VITE_OTEL_COLLECTOR_URL: http://localhost:4318/v1/traces
+          VITE_OTEL_SERVICE_NAME: delineate-frontend
+          VITE_JAEGER_UI_URL: http://localhost:16686
+
+      - name: 📦 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+          retention-days: 7
+
+      - name: 📊 Report build results
+        if: success()
+        run: echo "✅ Frontend built successfully"
+
+  build-backend-docker:
+    name: 🐳 Build Backend Docker Image
+    runs-on: ubuntu-24.04
+    needs: test-backend
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: 🐳 Build backend Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile.prod
           push: false
-          tags: delineate-hackathon-challenge:${{ github.sha }}
+          tags: |
+            delineate-backend:${{ github.sha }}
+            delineate-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 📊 Report build results
+        if: success()
+        run: |
+          echo "✅ Backend Docker image built successfully"
+          echo "Image tags:"
+          echo "  - delineate-backend:${{ github.sha }}"
+          echo "  - delineate-backend:latest"
+
+  build-frontend-docker:
+    name: 🐳 Build Frontend Docker Image
+    runs-on: ubuntu-24.04
+    needs: build-frontend
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build frontend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: docker/Dockerfile.frontend.prod
+          push: false
+          tags: |
+            delineate-frontend:${{ github.sha }}
+            delineate-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 📊 Report build results
+        if: success()
+        run: |
+          echo "✅ Frontend Docker image built successfully"
+          echo "Image tags:"
+          echo "  - delineate-frontend:${{ github.sha }}"
+          echo "  - delineate-frontend:latest"
+
+  # Optional: Deploy stage (can be enabled when deployment is configured)
+  deploy:
+    name: 🚀 Deploy (Optional)
+    runs-on: ubuntu-24.04
+    needs: [build-backend-docker, build-frontend-docker]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy notification
+        run: |
+          echo "::notice title=Deployment::Deployment stage is configured but not active"
+          echo "To enable deployment:"
+          echo "1. Configure your deployment target (AWS, GCP, Azure, etc.)"
+          echo "2. Add necessary secrets to GitHub repository settings"
+          echo "3. Uncomment and configure deployment steps below"
+
+      # Uncomment and configure based on your deployment target:
+      #
+      # Example: Deploy to AWS ECS
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
+      #
+      # - name: Deploy to ECS
+      #   run: |
+      #     aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
+      #
+      # Example: Deploy to Google Cloud Run
+      # - name: Setup Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #
+      # - name: Deploy to Cloud Run
+      #   run: |
+      #     gcloud run deploy delineate-hackathon --image gcr.io/$PROJECT_ID/delineate:${{ github.sha }}
+      #
+      # Example: Deploy to Azure Container Instances
+      # - name: Login to Azure
+      #   uses: azure/login@v2
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+      #
+      # - name: Deploy to Azure
+      #   run: |
+      #     az container create --resource-group your-rg --name delineate-hackathon --image your-registry/delineate:${{ github.sha }}
+
+  # Pipeline summary
+  summary:
+    name: 📋 Pipeline Summary
+    runs-on: ubuntu-24.04
+    needs:
+      [
+        lint-backend,
+        lint-frontend,
+        test-backend,
+        build-frontend,
+        build-backend-docker,
+        build-frontend-docker,
+      ]
+    if: always()
+
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "# CI/CD Pipeline Results 🎯" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Backend" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Lint | ${{ needs.lint-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 E2E Tests | ${{ needs.test-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker Build | ${{ needs.build-backend-docker.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Frontend" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Lint | ${{ needs.lint-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ Build | ${{ needs.build-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker Build | ${{ needs.build-frontend-docker.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: ✅ All stages passed
+        if: ${{ needs.lint-backend.result == 'success' && needs.lint-frontend.result == 'success' && needs.test-backend.result == 'success' && needs.build-frontend.result == 'success' && needs.build-backend-docker.result == 'success' && needs.build-frontend-docker.result == 'success' }}
+        run: echo "::notice title=Pipeline Success::All pipeline stages completed successfully! 🎉"
+
+      - name: ❌ Pipeline failed
+        if: ${{ needs.lint-backend.result != 'success' || needs.lint-frontend.result != 'success' || needs.test-backend.result != 'success' || needs.build-frontend.result != 'success' || needs.build-backend-docker.result != 'success' || needs.build-frontend-docker.result != 'success' }}
+        run: |
+          echo "::error title=Pipeline Failure::One or more pipeline stages failed"
+          exit 1

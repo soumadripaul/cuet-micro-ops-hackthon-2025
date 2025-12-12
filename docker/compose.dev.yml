@@ -20,14 +20,41 @@ services:
       - S3_SECRET_ACCESS_KEY=minioadmin
       - S3_BUCKET_NAME=downloads
       - S3_FORCE_PATH_STYLE=true
+      - CORS_ORIGINS=http://localhost:5173
     depends_on:
       - delineate-jaeger
+    networks:
+      - delineate-network
+
+  delineate-frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/Dockerfile.frontend.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/index.html:/app/index.html
+      - ../frontend/vite.config.ts:/app/vite.config.ts
+    environment:
+      - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+      - VITE_SENTRY_ENVIRONMENT=development
+      - VITE_API_BASE_URL=http://localhost:3000
+      - VITE_OTEL_COLLECTOR_URL=http://localhost:4318/v1/traces
+      - VITE_OTEL_SERVICE_NAME=delineate-frontend
+      - VITE_JAEGER_UI_URL=http://localhost:16686
+    depends_on:
+      - delineate-app
+      - delineate-jaeger
+    networks:
+      - delineate-network
 
   delineate-jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"
-      - "4318:4318"
+      - "16686:16686" # Jaeger UI
+      - "4318:4318" # OTLP HTTP receiver
+      - "14268:14268" # Jaeger collector
     environment:
       - COLLECTOR_OTLP_ENABLED=true
 
@@ -61,3 +88,9 @@ services:
 
 volumes:
   minio_data:
+    networks:
+      - delineate-network
+
+networks:
+  delineate-network:
+    driver: bridge
