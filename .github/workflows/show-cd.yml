@@ -1,0 +1,41 @@
+name: Show cd Behavior
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  demo-working-directory:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: List root
+        run: ls -la
+
+      - name: List frontend via working-directory
+        working-directory: frontend
+        run: |
+          echo "Using working-directory=frontend"
+          pwd
+          ls -la
+
+  demo-inline-cd:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: cd inside single step
+        run: |
+          echo "Start in:" && pwd
+          cd frontend
+          echo "Now in:" && pwd
+          ls -la
+
+      - name: Show cd does not persist to next step
+        run: |
+          echo "Back to step default:" && pwd
+          ls -la

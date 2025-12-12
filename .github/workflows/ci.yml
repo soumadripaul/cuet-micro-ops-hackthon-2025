@@ -58,12 +58,10 @@ jobs:
             ${{ runner.os }}-node-frontend-
 
       - name: 📥 Install frontend dependencies
-        working-directory: frontend
-        run: npm ci --prefer-offline --no-audit
+        run: npm run frontend:install
 
       - name: 🔍 Run frontend lint
-        working-directory: frontend
-        run: npm run lint
+        run: npm run frontend:lint
 
   test-backend:
     name: 🧪 Backend E2E Tests
@@ -135,12 +133,10 @@ jobs:
             ${{ runner.os }}-node-frontend-
 
       - name: 📥 Install frontend dependencies
-        working-directory: frontend
-        run: npm ci --prefer-offline --no-audit
+        run: npm run frontend:install
 
       - name: 🏗️ Build frontend
-        working-directory: frontend
-        run: npm run build
+        run: npm run frontend:build
         env:
           VITE_SENTRY_DSN: ""
           VITE_SENTRY_ENVIRONMENT: production

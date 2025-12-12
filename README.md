@@ -398,6 +398,23 @@ A complete React frontend with Sentry and OpenTelemetry integration has been imp
 
 - 🎯 Real-time health monitoring dashboard
 - 📥 Download job management with status tracking
+ 
+### CI/CD and `cd`-free frontend scripts
+
+To avoid relying on `cd` across steps in CI and to simplify local usage, the root `package.json` includes helper scripts that run inside the `frontend` directory using `npm --prefix`:
+
+- **frontend:install**: Install dependencies in `frontend`
+- **frontend:lint**: Run lint inside `frontend`
+- **frontend:build**: Build the frontend
+- **frontend:dev**: Start the frontend dev server
+
+Example:
+
+```bash
+# Install and build frontend without cd
+npm run frontend:install
+npm run frontend:build
+```
 - 🐛 Comprehensive Sentry error tracking with user feedback dialogs
 - 📊 End-to-end distributed tracing with OpenTelemetry
 - 🔍 Full trace correlation between frontend errors and backend operations
