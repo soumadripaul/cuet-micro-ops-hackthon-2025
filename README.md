@@ -558,6 +558,161 @@ npm run docker:prod  # Start with Docker (production)
 - Path traversal prevention for S3 keys
 - Graceful shutdown handling
 
+## CI/CD
+
+![CI/CD Pipeline](https://github.com/bongodev/cuet-micro-ops-hackthon-2025/actions/workflows/ci.yml/badge.svg)
+
+This project uses **GitHub Actions** for continuous integration and deployment. The pipeline automatically runs on every push to `main`/`master` and on all pull requests.
+
+### Pipeline Overview
+
+The CI/CD pipeline consists of four stages:
+
+```text
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ 🔍 Lint     │───▶│ 🧪 Test     │───▶│ 🐳 Build    │───▶│ 🚀 Deploy   │
+│  ESLint +   │    │   E2E       │    │   Docker    │    │  (Optional) │
+│  Prettier   │    │   Tests     │    │   Image     │    │             │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+#### 1. 🔍 Lint & Format Check
+
+- Runs ESLint to catch code quality issues
+- Checks code formatting with Prettier
+- **Fast fail**: Stops pipeline immediately if linting fails
+
+#### 2. 🧪 E2E Tests
+
+- Runs the complete end-to-end test suite
+- Tests API endpoints and business logic
+- Uses environment variables for test configuration
+
+#### 3. 🐳 Docker Build
+
+- Builds production Docker image
+- Uses BuildKit caching for faster builds
+- Tags image with commit SHA and `latest`
+
+#### 4. 🚀 Deploy (Optional)
+
+- Currently configured but not active
+- Ready to deploy to AWS, GCP, Azure, or other platforms
+- Only runs on pushes to `main` branch
+
+### Pipeline Features
+
+- ✅ **Dependency Caching**: Node modules are cached between runs for faster builds
+- ✅ **Fail Fast**: Pipeline stops immediately on errors to save resources
+- ✅ **Clear Results**: Each stage reports results with emojis and detailed logs
+- ✅ **Parallel Execution**: Independent stages run concurrently where possible
+- ✅ **Pull Request Checks**: All PRs must pass before merging
+- ✅ **Concurrency Control**: Cancels outdated runs when new commits are pushed
+
+
+### For Contributors
+
+#### Running Tests Locally Before Pushing
+
+Always run these commands before pushing to ensure your changes pass CI:
+
+```bash
+# 1. Run linting
+npm run lint
+
+# 2. Check code formatting
+npm run format:check
+
+# 3. Auto-fix formatting issues (optional)
+npm run format
+
+# 4. Run E2E tests
+npm run test:e2e
+
+# 5. Build Docker image to verify Dockerfile
+docker build -f docker/Dockerfile.prod -t test-build .
+```
+
+#### Quick Pre-Push Checklist
+
+```bash
+# Run all checks at once
+npm run lint && npm run format:check && npm run test:e2e
+```
+
+If all commands succeed, your code is ready to push! ✅
+
+#### What Happens on Push?
+
+1. **Commit & Push**: You push your code to GitHub
+2. **Pipeline Trigger**: GitHub Actions automatically starts the CI/CD pipeline
+3. **Parallel Execution**: Linting and formatting checks run first
+4. **Sequential Testing**: If linting passes, E2E tests run
+5. **Docker Build**: If tests pass, Docker image is built
+6. **Results**: You receive a notification with pipeline status
+7. **PR Status**: Pull requests show check status before merging
+
+#### Branch Protection
+
+To enable branch protection (recommended for teams):
+
+1. Go to **Settings → Branches** in GitHub
+2. Add a rule for `main` branch:
+   - ✅ Require status checks to pass before merging
+   - ✅ Require branches to be up to date before merging
+   - ✅ Select: `Lint & Format Check`, `E2E Tests`, `Build Docker Image`
+3. Save changes
+
+This ensures no code can be merged without passing all CI checks.
+
+#### Monitoring Pipeline Status
+
+- **GitHub Actions Tab**: View all pipeline runs and logs
+- **PR Checks**: See pipeline status directly on pull requests
+- **README Badge**: Shows current pipeline status for `main` branch
+- **Email Notifications**: Receive alerts for failed builds (configure in GitHub settings)
+
+### Deployment Configuration
+
+The deploy stage is included but commented out. To enable deployment:
+
+1. Choose your deployment platform (AWS ECS, Google Cloud Run, Azure, Railway, etc.)
+2. Add required secrets to GitHub repository settings:
+   - Go to **Settings → Secrets and variables → Actions**
+   - Add deployment credentials (e.g., `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
+3. Uncomment and configure deployment steps in [.github/workflows/ci.yml](.github/workflows/ci.yml)
+4. Update environment variables for production
+
+#### Example Deployment Targets
+
+- **AWS ECS**: Uncomment AWS deployment example in workflow
+- **Google Cloud Run**: Uncomment GCP deployment example
+- **Azure Container Instances**: Uncomment Azure deployment example
+- **Railway/Render/Fly.io**: Add their respective deployment actions
+
+### Troubleshooting
+
+#### Pipeline Failing?
+
+1. **Check the logs**: Click on the failed job in GitHub Actions
+2. **Run locally**: Execute the same commands that failed in CI
+3. **Dependencies**: Ensure `package-lock.json` is committed
+4. **Environment**: Verify all required environment variables are set
+
+#### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Lint errors | Run `npm run lint:fix` to auto-fix |
+| Format errors | Run `npm run format` to auto-format |
+| Test failures | Check test logs and run `npm run test:e2e` locally |
+| Docker build fails | Test with `docker build -f docker/Dockerfile.prod .` |
+| Cache issues | Clear cache in GitHub Actions settings |
+
+### Pipeline Configuration
+
+Full pipeline configuration: [.github/workflows/ci.yml](.github/workflows/ci.yml)
+
 ## License
 
 MIT

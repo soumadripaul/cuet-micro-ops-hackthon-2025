@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,39 +6,65 @@ on:
   pull_request:
     branches: [main, master]
 
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
-    name: Lint
+    name: 🔍 Lint & Format Check
     runs-on: ubuntu-24.04
     container:
       image: node:24-slim
+    
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      - name: Run ESLint
+      - name: 📥 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🔍 Run ESLint
         run: npm run lint
 
-      - name: Check formatting
+      - name: 💅 Check code formatting
         run: npm run format:check
 
   test:
-    name: E2E Tests
+    name: 🧪 E2E Tests
     runs-on: ubuntu-24.04
     needs: lint
     container:
       image: node:24-slim
+    
+    # Fail fast: Stop other jobs if this fails
+    continue-on-error: false
+    
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm ci
+      - name: 📦 Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      - name: Run E2E tests
+      - name: 📥 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🧪 Run E2E tests
         run: npm run test:e2e
         env:
           NODE_ENV: development
@@ -53,23 +79,133 @@ jobs:
           RATE_LIMIT_MAX_REQUESTS: "100"
           CORS_ORIGINS: "*"
 
+      - name: 📊 Report test results
+        if: always()
+        run: |
+          echo "::notice title=Test Status::E2E tests completed"
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully"
+          else
+            echo "❌ Some tests failed"
+            exit 1
+          fi
+
   build:
-    name: Build Docker Image
+    name: 🐳 Build Docker Image
     runs-on: ubuntu-24.04
     needs: test
+    
     steps:
-      - name: Checkout
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: 🐳 Build production Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile.prod
           push: false
-          tags: delineate-hackathon-challenge:${{ github.sha }}
+          tags: |
+            delineate-hackathon-challenge:${{ github.sha }}
+            delineate-hackathon-challenge:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 📊 Report build results
+        if: success()
+        run: |
+          echo "✅ Docker image built successfully"
+          echo "Image tags:"
+          echo "  - delineate-hackathon-challenge:${{ github.sha }}"
+          echo "  - delineate-hackathon-challenge:latest"
+
+  # Optional: Deploy stage (can be enabled when deployment is configured)
+  deploy:
+    name: 🚀 Deploy (Optional)
+    runs-on: ubuntu-24.04
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy notification
+        run: |
+          echo "::notice title=Deployment::Deployment stage is configured but not active"
+          echo "To enable deployment:"
+          echo "1. Configure your deployment target (AWS, GCP, Azure, etc.)"
+          echo "2. Add necessary secrets to GitHub repository settings"
+          echo "3. Uncomment and configure deployment steps below"
+      
+      # Uncomment and configure based on your deployment target:
+      # 
+      # Example: Deploy to AWS ECS
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
+      #
+      # - name: Deploy to ECS
+      #   run: |
+      #     aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
+      #
+      # Example: Deploy to Google Cloud Run
+      # - name: Setup Google Cloud SDK
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #
+      # - name: Deploy to Cloud Run
+      #   run: |
+      #     gcloud run deploy delineate-hackathon --image gcr.io/$PROJECT_ID/delineate:${{ github.sha }}
+      #
+      # Example: Deploy to Azure Container Instances
+      # - name: Login to Azure
+      #   uses: azure/login@v2
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+      #
+      # - name: Deploy to Azure
+      #   run: |
+      #     az container create --resource-group your-rg --name delineate-hackathon --image your-registry/delineate:${{ github.sha }}
+
+  # Pipeline summary
+  summary:
+    name: 📋 Pipeline Summary
+    runs-on: ubuntu-24.04
+    needs: [lint, test, build]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate summary
+        run: |
+          echo "# CI/CD Pipeline Results 🎯" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Lint & Format | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 E2E Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: ✅ All stages passed
+        if: ${{ needs.lint.result == 'success' && needs.test.result == 'success' && needs.build.result == 'success' }}
+        run: echo "::notice title=Pipeline Success::All pipeline stages completed successfully! 🎉"
+
+      - name: ❌ Pipeline failed
+        if: ${{ needs.lint.result != 'success' || needs.test.result != 'success' || needs.build.result != 'success' }}
+        run: |
+          echo "::error title=Pipeline Failure::One or more pipeline stages failed"
+          exit 1
