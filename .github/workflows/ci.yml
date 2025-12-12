@@ -287,7 +287,15 @@ jobs:
   summary:
     name: 📋 Pipeline Summary
     runs-on: ubuntu-24.04
-    needs: [lint-backend, lint-frontend, test-backend, build-frontend, build-backend-docker, build-frontend-docker]
+    needs:
+      [
+        lint-backend,
+        lint-frontend,
+        test-backend,
+        build-frontend,
+        build-backend-docker,
+        build-frontend-docker,
+      ]
     if: always()
 
     steps:

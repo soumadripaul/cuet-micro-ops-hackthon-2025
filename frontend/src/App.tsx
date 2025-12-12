@@ -1,10 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
-import { DownloadJobs } from './components/DownloadJobs';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { HealthStatus } from './components/HealthStatus';
-import { PerformanceMetrics } from './components/PerformanceMetrics';
-import { TraceViewer } from './components/TraceViewer';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
+import { DownloadJobs } from "./components/DownloadJobs";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { HealthStatus } from "./components/HealthStatus";
+import { PerformanceMetrics } from "./components/PerformanceMetrics";
+import { TraceViewer } from "./components/TraceViewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +22,9 @@ function AppContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Download Service Monitor</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Download Service Monitor
+              </h1>
               <p className="text-sm text-gray-600 mt-1">
                 Real-time monitoring with Sentry & OpenTelemetry
               </p>
@@ -55,7 +57,7 @@ function AppContent() {
             <HealthStatus />
             <DownloadJobs />
           </div>
-          
+
           <div className="space-y-6">
             <TraceViewer />
             <PerformanceMetrics />
@@ -67,18 +69,24 @@ function AppContent() {
           <div className="space-y-4 text-sm text-gray-700">
             <div>
               <h3 className="font-semibold mb-2">1. Test Normal Download</h3>
-              <p className="text-gray-600">Enter a file ID (e.g., 70000) and click "Check Download" or "Start Download"</p>
+              <p className="text-gray-600">
+                Enter a file ID (e.g., 70000) and click "Check Download" or
+                "Start Download"
+              </p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">2. Test Sentry Integration</h3>
               <p className="text-gray-600">
-                Check the "Trigger Sentry test error" checkbox and click "Check Download". The error will appear in your Sentry dashboard with trace correlation.
+                Check the "Trigger Sentry test error" checkbox and click "Check
+                Download". The error will appear in your Sentry dashboard with
+                trace correlation.
               </p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">3. View Distributed Traces</h3>
               <p className="text-gray-600">
-                Click "View Trace" on any job to see the full request flow in Jaeger UI, including frontend and backend spans.
+                Click "View Trace" on any job to see the full request flow in
+                Jaeger UI, including frontend and backend spans.
               </p>
             </div>
           </div>

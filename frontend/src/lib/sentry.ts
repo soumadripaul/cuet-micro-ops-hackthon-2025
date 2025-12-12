@@ -1,11 +1,11 @@
-import * as Sentry from '@sentry/react';
+import * as Sentry from "@sentry/react";
 
 export function initializeSentry() {
   const dsn = import.meta.env.VITE_SENTRY_DSN;
-  const environment = import.meta.env.VITE_SENTRY_ENVIRONMENT || 'development';
+  const environment = import.meta.env.VITE_SENTRY_ENVIRONMENT || "development";
 
   if (!dsn) {
-    console.warn('Sentry DSN not configured. Error tracking disabled.');
+    console.warn("Sentry DSN not configured. Error tracking disabled.");
     return;
   }
 
@@ -19,11 +19,11 @@ export function initializeSentry() {
         blockAllMedia: false,
       }),
     ],
-    
+
     // Performance Monitoring
     tracesSampleRate: 1.0, // Capture 100% of transactions for development
     tracePropagationTargets: [
-      'localhost',
+      "localhost",
       /^http:\/\/localhost:3000\/v1/,
       /^http:\/\/delineate-app:3000\/v1/,
     ],

@@ -42,9 +42,9 @@ services:
   delineate-jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"  # Jaeger UI
-      - "4318:4318"    # OTLP HTTP receiver
-      - "14268:14268"  # Jaeger collector
+      - "16686:16686" # Jaeger UI
+      - "4318:4318" # OTLP HTTP receiver
+      - "14268:14268" # Jaeger collector
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     restart: unless-stopped

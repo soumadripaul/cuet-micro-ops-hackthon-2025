@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { Activity, AlertCircle, CheckCircle2, Database } from 'lucide-react';
-import { api } from '../lib/api';
+import { useQuery } from "@tanstack/react-query";
+import { Activity, AlertCircle, CheckCircle2, Database } from "lucide-react";
+import { api } from "../lib/api";
 
 export function HealthStatus() {
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['health'],
+    queryKey: ["health"],
     queryFn: () => api.health(),
     refetchInterval: 5000, // Refetch every 5 seconds
   });
@@ -45,8 +45,8 @@ export function HealthStatus() {
     );
   }
 
-  const isHealthy = data?.status === 'healthy';
-  const storageOk = data?.checks?.storage === 'ok';
+  const isHealthy = data?.status === "healthy";
+  const storageOk = data?.checks?.storage === "ok";
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -58,7 +58,9 @@ export function HealthStatus() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-gray-700">Overall Status</span>
-          <div className={`flex items-center ${isHealthy ? 'text-green-600' : 'text-red-600'}`}>
+          <div
+            className={`flex items-center ${isHealthy ? "text-green-600" : "text-red-600"}`}
+          >
             {isHealthy ? (
               <CheckCircle2 className="mr-2 h-5 w-5" />
             ) : (
@@ -73,13 +75,17 @@ export function HealthStatus() {
             <Database className="mr-2 h-4 w-4" />
             Storage
           </span>
-          <div className={`flex items-center ${storageOk ? 'text-green-600' : 'text-red-600'}`}>
+          <div
+            className={`flex items-center ${storageOk ? "text-green-600" : "text-red-600"}`}
+          >
             {storageOk ? (
               <CheckCircle2 className="mr-2 h-5 w-5" />
             ) : (
               <AlertCircle className="mr-2 h-5 w-5" />
             )}
-            <span className="font-semibold capitalize">{data?.checks?.storage}</span>
+            <span className="font-semibold capitalize">
+              {data?.checks?.storage}
+            </span>
           </div>
         </div>
 

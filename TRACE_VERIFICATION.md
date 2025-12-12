@@ -7,20 +7,27 @@
 **Location:** `frontend/src/lib/api.ts` (lines 55-79)
 
 ```typescript
-async function fetchWithTracing<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const tracer = trace.getTracer('delineate-frontend');
-  
-  return tracer.startActiveSpan(`HTTP ${options.method || 'GET'} ${url}`, async (span) => {
-    // Get current trace ID for correlation
-    const traceId = getCurrentTraceId();
-    
-    span.setAttribute('trace.id', traceId);
-    // ... rest of implementation
-  });
+async function fetchWithTracing<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const tracer = trace.getTracer("delineate-frontend");
+
+  return tracer.startActiveSpan(
+    `HTTP ${options.method || "GET"} ${url}`,
+    async (span) => {
+      // Get current trace ID for correlation
+      const traceId = getCurrentTraceId();
+
+      span.setAttribute("trace.id", traceId);
+      // ... rest of implementation
+    },
+  );
 }
 ```
 
 **How it works:**
+
 - Every API call creates a new span with OpenTelemetry
 - Span has a unique trace ID
 - Trace ID is extracted and stored for correlation
@@ -35,10 +42,7 @@ async function fetchWithTracing<T>(url: string, options: RequestInit = {}): Prom
 registerInstrumentations({
   instrumentations: [
     new FetchInstrumentation({
-      propagateTraceHeaderCorsUrls: [
-        /localhost:3000/,
-        /delineate-app:3000/,
-      ],
+      propagateTraceHeaderCorsUrls: [/localhost:3000/, /delineate-app:3000/],
       // This automatically adds W3C Trace Context headers
     }),
   ],
@@ -46,10 +50,12 @@ registerInstrumentations({
 ```
 
 **Headers added automatically:**
+
 - `traceparent: 00-<trace-id>-<span-id>-01`
 - `tracestate: (optional)`
 
 **Backend CORS Fixed:** ✅
+
 - Added `traceparent` and `tracestate` to `allowHeaders`
 - Location: `src/index.ts` (lines 90-106)
 
@@ -69,6 +75,7 @@ app.use(
 ```
 
 **How it works:**
+
 - `@hono/otel` middleware automatically:
   - Reads `traceparent` header from request
   - Continues the trace with the same trace ID
@@ -76,6 +83,7 @@ app.use(
   - Exports spans to Jaeger collector
 
 **Backend logs include trace context:** ✅
+
 - OpenTelemetry SDK automatically injects trace context into logs
 - Trace ID is available in the active span context
 
@@ -86,6 +94,7 @@ app.use(
 **Frontend Sentry Integration:**
 
 **Location 1:** `frontend/src/lib/sentry.ts` (lines 35-45)
+
 ```typescript
 beforeSend(event, hint) {
   // Add trace context to error events
@@ -101,6 +110,7 @@ beforeSend(event, hint) {
 ```
 
 **Location 2:** `frontend/src/lib/api.ts` (lines 95-107)
+
 ```typescript
 // Report error to Sentry with trace context
 Sentry.captureException(error, {
@@ -111,19 +121,20 @@ Sentry.captureException(error, {
   },
   extra: {
     url,
-    method: options.method || 'GET',
+    method: options.method || "GET",
     errorResponse: errorData,
   },
 });
 ```
 
 **Location 3:** `frontend/src/components/ErrorBoundary.tsx` (lines 42-50)
+
 ```typescript
 // Send to Sentry with trace context
 Sentry.captureException(error, {
   tags: {
     trace_id: traceId,
-    error_boundary: 'true',
+    error_boundary: "true",
   },
   extra: {
     errorInfo,
@@ -186,6 +197,7 @@ User Action: Click "Check Download" button
 ## ✅ Verification Checklist
 
 ### Test 1: Normal Flow with Trace ID
+
 - [x] User clicks button
 - [x] Frontend creates span
 - [x] Trace ID generated
@@ -196,6 +208,7 @@ User Action: Click "Check Download" button
 - [x] Click "View Trace" opens Jaeger with correct trace
 
 ### Test 2: Error Flow with Trace Correlation
+
 - [x] User triggers error (Sentry test checkbox)
 - [x] Frontend creates span
 - [x] Trace ID: abc123
@@ -209,6 +222,7 @@ User Action: Click "Check Download" button
 - [x] Correlation: Sentry trace_id → Jaeger trace ID
 
 ### Test 3: Error Boundary with Trace Context
+
 - [x] Component error occurs
 - [x] ErrorBoundary catches error
 - [x] Gets current trace ID
@@ -265,12 +279,14 @@ User Action: Click "Check Download" button
 ## 📊 What You See in Each System
 
 ### In the UI (http://localhost:5173)
+
 - Job entries show trace ID
 - "View Trace" links to Jaeger
 - Error boundary displays trace ID
 - All operations tracked
 
 ### In Jaeger (http://localhost:16686)
+
 - Search by service: `delineate-frontend` or `delineate-hackathon-challenge`
 - See complete request flows
 - Frontend spans → Backend spans
@@ -278,6 +294,7 @@ User Action: Click "Check Download" button
 - Search by trace ID directly
 
 ### In Sentry (https://sentry.io)
+
 - All errors captured
 - Tagged with `trace_id`
 - Tagged with `request_id`
@@ -288,16 +305,16 @@ User Action: Click "Check Download" button
 
 ## 🎯 Summary
 
-| Step | Status | Implementation |
-|------|--------|----------------|
-| 1. Frontend creates span with trace ID | ✅ | `api.ts` + `opentelemetry.ts` |
-| 2. `traceparent` header added | ✅ | `FetchInstrumentation` auto-adds |
-| 3. Backend CORS allows header | ✅ | Fixed in `src/index.ts` |
-| 4. Backend continues trace | ✅ | `httpInstrumentationMiddleware` |
-| 5. Backend logs include trace | ✅ | OpenTelemetry SDK automatic |
-| 6. Errors tagged with trace_id | ✅ | Sentry integration in 3 places |
-| 7. Trace visible in Jaeger | ✅ | OTLP exporter configured |
-| 8. End-to-end correlation | ✅ | All pieces connected |
+| Step                                   | Status | Implementation                   |
+| -------------------------------------- | ------ | -------------------------------- |
+| 1. Frontend creates span with trace ID | ✅     | `api.ts` + `opentelemetry.ts`    |
+| 2. `traceparent` header added          | ✅     | `FetchInstrumentation` auto-adds |
+| 3. Backend CORS allows header          | ✅     | Fixed in `src/index.ts`          |
+| 4. Backend continues trace             | ✅     | `httpInstrumentationMiddleware`  |
+| 5. Backend logs include trace          | ✅     | OpenTelemetry SDK automatic      |
+| 6. Errors tagged with trace_id         | ✅     | Sentry integration in 3 places   |
+| 7. Trace visible in Jaeger             | ✅     | OTLP exporter configured         |
+| 8. End-to-end correlation              | ✅     | All pieces connected             |
 
 ---
 

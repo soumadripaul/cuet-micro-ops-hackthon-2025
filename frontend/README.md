@@ -89,6 +89,7 @@ npm run docker:prod
 ```
 
 This starts:
+
 - Backend API on `http://localhost:3000`
 - Frontend on `http://localhost:5173`
 - Jaeger UI on `http://localhost:16686`
@@ -151,6 +152,7 @@ OpenTelemetry is pre-configured to work with the Jaeger instance in Docker Compo
 ### Trace Correlation with Sentry
 
 When an error occurs:
+
 1. Sentry captures the error
 2. Error is tagged with `trace_id`
 3. Use the trace ID to find the corresponding trace in Jaeger
@@ -161,6 +163,7 @@ When an error occurs:
 ### 1. Health Status Dashboard
 
 Monitors the API health in real-time:
+
 - Overall service status
 - Storage connectivity
 - Auto-refreshes every 5 seconds
@@ -168,6 +171,7 @@ Monitors the API health in real-time:
 ### 2. Download Jobs
 
 Manage download jobs:
+
 - **Check Download**: Verify file status
 - **Start Download**: Initiate a new download
 - **Sentry Test**: Trigger a test error for Sentry
@@ -176,6 +180,7 @@ Manage download jobs:
 ### 3. Trace Viewer
 
 Direct access to Jaeger UI with instructions on:
+
 - How distributed tracing works
 - End-to-end trace correlation
 - Frontend → Backend trace flow
@@ -183,6 +188,7 @@ Direct access to Jaeger UI with instructions on:
 ### 4. Performance Metrics
 
 Track API performance:
+
 - Success rate
 - Failure count
 - Average response time
@@ -239,14 +245,14 @@ frontend/
 
 ## Environment Variables Reference
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_SENTRY_DSN` | Sentry project DSN | `https://...@sentry.io/123` |
-| `VITE_SENTRY_ENVIRONMENT` | Environment name | `development` / `production` |
-| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:3000` |
+| Variable                  | Description                      | Example                           |
+| ------------------------- | -------------------------------- | --------------------------------- |
+| `VITE_SENTRY_DSN`         | Sentry project DSN               | `https://...@sentry.io/123`       |
+| `VITE_SENTRY_ENVIRONMENT` | Environment name                 | `development` / `production`      |
+| `VITE_API_BASE_URL`       | Backend API URL                  | `http://localhost:3000`           |
 | `VITE_OTEL_COLLECTOR_URL` | OpenTelemetry collector endpoint | `http://localhost:4318/v1/traces` |
-| `VITE_OTEL_SERVICE_NAME` | Service name in traces | `delineate-frontend` |
-| `VITE_JAEGER_UI_URL` | Jaeger UI URL | `http://localhost:16686` |
+| `VITE_OTEL_SERVICE_NAME`  | Service name in traces           | `delineate-frontend`              |
+| `VITE_JAEGER_UI_URL`      | Jaeger UI URL                    | `http://localhost:16686`          |
 
 ## Troubleshooting
 
@@ -303,10 +309,10 @@ npm run lint
 Example custom span:
 
 ```typescript
-import { createSpan } from './lib/opentelemetry';
+import { createSpan } from "./lib/opentelemetry";
 
-await createSpan('custom-operation', async (span) => {
-  span.setAttribute('user.id', userId);
+await createSpan("custom-operation", async (span) => {
+  span.setAttribute("user.id", userId);
   // Your code here
 });
 ```
@@ -379,6 +385,7 @@ See LICENSE file in the project root.
 ## Support
 
 For issues and questions:
+
 - Check [Sentry Documentation](https://docs.sentry.io/platforms/javascript/guides/react/)
 - Check [OpenTelemetry Documentation](https://opentelemetry.io/docs/instrumentation/js/)
 - Open an issue in the project repository

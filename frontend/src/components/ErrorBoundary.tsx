@@ -1,10 +1,14 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
-import { getCurrentTraceId } from '../lib/opentelemetry';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import * as Sentry from "@sentry/react";
+import { getCurrentTraceId } from "../lib/opentelemetry";
 
 interface Props {
   children: ReactNode;
-  fallback?: (error: Error, errorInfo: ErrorInfo, traceId?: string) => ReactNode;
+  fallback?: (
+    error: Error,
+    errorInfo: ErrorInfo,
+    traceId?: string,
+  ) => ReactNode;
 }
 
 interface State {
@@ -36,13 +40,13 @@ export class ErrorBoundary extends Component<Props, State> {
     const traceId = getCurrentTraceId();
 
     // Log error to console
-    console.error('Error caught by boundary:', error, errorInfo);
+    console.error("Error caught by boundary:", error, errorInfo);
 
     // Send to Sentry with trace context
     Sentry.captureException(error, {
       tags: {
         trace_id: traceId,
-        error_boundary: 'true',
+        error_boundary: "true",
       },
       extra: {
         errorInfo,
@@ -61,14 +65,14 @@ export class ErrorBoundary extends Component<Props, State> {
     if (traceId) {
       Sentry.showReportDialog({
         eventId: Sentry.lastEventId(),
-        title: 'It looks like we\'re having issues.',
-        subtitle: 'Our team has been notified.',
+        title: "It looks like we're having issues.",
+        subtitle: "Our team has been notified.",
         subtitle2: `Trace ID: ${traceId}`,
-        labelName: 'Name',
-        labelEmail: 'Email',
-        labelComments: 'What happened?',
-        labelClose: 'Close',
-        labelSubmit: 'Submit',
+        labelName: "Name",
+        labelEmail: "Email",
+        labelComments: "What happened?",
+        labelClose: "Close",
+        labelSubmit: "Submit",
       });
     }
   }
@@ -79,7 +83,7 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback(
           this.state.error!,
           this.state.errorInfo!,
-          this.state.traceId
+          this.state.traceId,
         );
       }
 
@@ -115,7 +119,7 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.traceId && (
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
                 <p className="text-sm text-blue-800">
-                  <span className="font-semibold">Trace ID:</span>{' '}
+                  <span className="font-semibold">Trace ID:</span>{" "}
                   <code className="bg-blue-100 px-2 py-1 rounded">
                     {this.state.traceId}
                   </code>
@@ -150,7 +154,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 Reload Page
               </button>
               <button
-                onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+                onClick={() =>
+                  this.setState({
+                    hasError: false,
+                    error: null,
+                    errorInfo: null,
+                  })
+                }
                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors"
               >
                 Try Again

@@ -395,6 +395,7 @@ Errors in Sentry tagged with: trace_id=abc123
 A complete React frontend with Sentry and OpenTelemetry integration has been implemented in the `frontend/` directory. See [frontend/README.md](frontend/README.md) for detailed documentation.
 
 **Key Features:**
+
 - 🎯 Real-time health monitoring dashboard
 - 📥 Download job management with status tracking
 - 🐛 Comprehensive Sentry error tracking with user feedback dialogs

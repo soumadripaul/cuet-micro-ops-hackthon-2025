@@ -1,17 +1,19 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from "lucide-react";
 
-const JAEGER_UI_URL = import.meta.env.VITE_JAEGER_UI_URL || 'http://localhost:16686';
+const JAEGER_UI_URL =
+  import.meta.env.VITE_JAEGER_UI_URL || "http://localhost:16686";
 
 export function TraceViewer() {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-lg font-semibold mb-4">Distributed Tracing</h2>
-      
+
       <div className="space-y-4">
         <p className="text-gray-600 text-sm">
-          View distributed traces to debug and analyze request flows across the frontend and backend.
+          View distributed traces to debug and analyze request flows across the
+          frontend and backend.
         </p>
-        
+
         <a
           href={JAEGER_UI_URL}
           target="_blank"
@@ -23,7 +25,9 @@ export function TraceViewer() {
         </a>
 
         <div className="mt-6 p-4 bg-gray-50 rounded-md border border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">How Tracing Works</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            How Tracing Works
+          </h3>
           <ul className="text-sm text-gray-600 space-y-2">
             <li className="flex items-start">
               <span className="mr-2">1.</span>

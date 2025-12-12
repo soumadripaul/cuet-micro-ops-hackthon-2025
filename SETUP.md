@@ -4,7 +4,7 @@ This guide walks you through setting up the entire system including the backend 
 
 ## Prerequisites
 
-- **Node.js 24+** 
+- **Node.js 24+**
 - **Docker & Docker Compose**
 - **Git**
 - **Sentry Account** (free tier available at [sentry.io](https://sentry.io))
@@ -42,6 +42,7 @@ cp .env.example .env
 #### Get Your DSN
 
 After creating the project, you'll see a DSN that looks like:
+
 ```
 https://abc123def456@o123456.ingest.sentry.io/7890123
 ```
@@ -92,6 +93,7 @@ npm run docker:dev
 ```
 
 This will start:
+
 - **Backend API**: http://localhost:3000
 - **Frontend UI**: http://localhost:5173
 - **Jaeger UI**: http://localhost:16686
@@ -105,6 +107,7 @@ curl http://localhost:3000/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "healthy",
@@ -176,6 +179,7 @@ docker run -d --name jaeger \
 ### Health Monitoring
 
 The dashboard automatically monitors API health every 5 seconds. You'll see:
+
 - Overall status (healthy/unhealthy)
 - Storage status (ok/error)
 - Last check timestamp
@@ -218,6 +222,7 @@ All requests create distributed traces. To view them:
 ### Correlating Errors and Traces
 
 When an error occurs:
+
 1. Note the **Trace ID** shown in the error (in Sentry or UI)
 2. Go to Jaeger UI
 3. Search for the trace ID
@@ -260,6 +265,7 @@ When an error occurs:
 ### Backend won't start
 
 **Check:**
+
 - Node.js version: `node --version` (should be 24+)
 - Port 3000 is available
 - .env file exists
@@ -267,6 +273,7 @@ When an error occurs:
 ### Frontend won't start
 
 **Check:**
+
 - Dependencies installed: `cd frontend && npm install`
 - Port 5173 is available
 - .env file exists with Sentry DSN
@@ -274,6 +281,7 @@ When an error occurs:
 ### Sentry errors not appearing
 
 **Check:**
+
 - DSN is correct in .env
 - Frontend has restarted after adding DSN
 - Check browser console for Sentry initialization logs
@@ -282,6 +290,7 @@ When an error occurs:
 ### Traces not in Jaeger
 
 **Check:**
+
 - Jaeger is running: http://localhost:16686
 - Give it 10-15 seconds (traces are batched)
 - Check browser console for OpenTelemetry logs
@@ -290,6 +299,7 @@ When an error occurs:
 ### CORS errors
 
 **Check:**
+
 - Backend .env has: `CORS_ORIGINS=http://localhost:5173`
 - Backend has been restarted
 - Both services are running
@@ -297,6 +307,7 @@ When an error occurs:
 ### Docker issues
 
 **Check:**
+
 - Docker is running: `docker ps`
 - No port conflicts: `docker ps` to see what's running
 - Try: `docker compose -f docker/compose.dev.yml down` then restart
@@ -306,6 +317,7 @@ When an error occurs:
 For production deployment:
 
 1. Update environment variables:
+
 ```bash
 NODE_ENV=production
 VITE_SENTRY_ENVIRONMENT=production
@@ -314,11 +326,13 @@ CORS_ORIGINS=https://yourdomain.com
 ```
 
 2. Build and run:
+
 ```bash
 npm run docker:prod
 ```
 
 3. Consider:
+
 - Using a reverse proxy (nginx/Cloudflare)
 - Setting up SSL certificates
 - Configuring proper S3/storage backend
@@ -341,6 +355,7 @@ npm run docker:prod
 ## Summary
 
 You now have:
+
 - ✅ Backend API with OpenTelemetry tracing
 - ✅ React frontend with real-time monitoring
 - ✅ Sentry error tracking with user feedback
