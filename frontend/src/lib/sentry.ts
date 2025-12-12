@@ -32,7 +32,7 @@ export function initializeSentry() {
     replaysSessionSampleRate: 0.1, // 10% of sessions
     replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
 
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Add trace context to error events
       const traceId = event.contexts?.trace?.trace_id;
       if (traceId) {

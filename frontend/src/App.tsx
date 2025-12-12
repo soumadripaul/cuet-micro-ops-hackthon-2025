@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppContent() {
+const AppContent = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-sm">
@@ -102,9 +102,9 @@ function AppContent() {
       </footer>
     </div>
   );
-}
+};
 
-function App() {
+const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -112,6 +112,6 @@ function App() {
       </QueryClientProvider>
     </ErrorBoundary>
   );
-}
+};
 
 export default Sentry.withProfiler(App);
