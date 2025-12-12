@@ -221,7 +221,7 @@ Track API performance:
 
 ## Project Structure
 
-```
+```text
 frontend/
 ├── src/
 │   ├── components/
@@ -321,7 +321,7 @@ await createSpan("custom-operation", async (span) => {
 
 ### End-to-End Trace Flow
 
-```
+```text
 User clicks "Download" button
         ↓
 Frontend creates span with trace-id: abc123
